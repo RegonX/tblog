@@ -34,11 +34,11 @@ describe('main Cloudflare Worker configuration', () => {
     expect(source('wrangler.jsonc')).not.toMatch(/database_id|account_id/)
   })
 
-  it('keeps local D1 development separate from Git deployment', () => {
+  it('keeps the local D1 development template separate from Git deployment', () => {
     const deployConfig = JSON.parse(source('wrangler.jsonc')) as {
       d1_databases: Array<Record<string, unknown>>
     } & Record<string, unknown>
-    const localConfig = JSON.parse(source('wrangler.local.jsonc')) as {
+    const localConfig = JSON.parse(source('wrangler.local.example.jsonc')) as {
       d1_databases: Array<Record<string, unknown>>
       secrets: { required: string[] }
     } & Record<string, unknown>
@@ -67,8 +67,9 @@ describe('main Cloudflare Worker configuration', () => {
     expect(packageJson.scripts.preview).toContain('wrangler dev --config wrangler.local.jsonc')
     expect(packageJson.scripts.deploy).toBe('wrangler deploy')
     expect(packageJson.scripts['drizzle:migrate:local']).toContain('--config wrangler.local.jsonc')
+    expect(source('.gitignore')).toContain('wrangler.local.jsonc')
     expect(source('nuxt.config.ts')).toContain("preset: 'cloudflare_module'")
-    expect(source('scripts/cloudflare-types.mjs')).toContain("'wrangler.local.jsonc'")
+    expect(source('scripts/cloudflare-types.mjs')).toContain("'wrangler.local.example.jsonc'")
   })
 
   it('keeps search and analytics scheduled tasks in separate invocations', () => {

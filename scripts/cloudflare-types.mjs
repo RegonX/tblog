@@ -6,7 +6,7 @@ import { parseJsonc } from './parse-jsonc.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const wrangler = resolve(root, 'node_modules', 'wrangler', 'bin', 'wrangler.js')
-const sourceConfigPath = resolve(root, 'wrangler.local.jsonc')
+const sourceConfigPath = resolve(root, 'wrangler.local.example.jsonc')
 const typesDirectory = resolve(root, '.wrangler', 'types')
 const typesConfigPath = resolve(typesDirectory, 'wrangler.jsonc')
 const typesConfig = parseJsonc(readFileSync(sourceConfigPath, 'utf8'))

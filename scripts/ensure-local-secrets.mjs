@@ -5,7 +5,7 @@
  * (32+ random bytes, base64url — no placeholder fragments).
  */
 import { randomBytes } from 'node:crypto'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -81,6 +81,13 @@ function ensureFile(relativePath, required, headerLines) {
   return { path: relativePath, created: !existed, updated: existed && updated }
 }
 
+function ensureLocalWranglerConfig() {
+  const localPath = join(root, 'wrangler.local.jsonc')
+  if (existsSync(localPath)) return false
+  copyFileSync(join(root, 'wrangler.local.example.jsonc'), localPath)
+  return true
+}
+
 const existingEnv = readEnvFile('.env')
 const existingDevVars = readEnvFile('.dev.vars')
 const sources = [existingEnv, existingDevVars]
@@ -107,6 +114,8 @@ const results = [
   ])
 ]
 
+const createdLocalWranglerConfig = ensureLocalWranglerConfig()
+
 for (const result of results) {
   if (result.created) {
     console.log(`[ensure-local-secrets] created ${result.path}`)
@@ -115,4 +124,8 @@ for (const result of results) {
   } else {
     console.log(`[ensure-local-secrets] kept existing ${result.path}`)
   }
+}
+
+if (createdLocalWranglerConfig) {
+  console.log('[ensure-local-secrets] created wrangler.local.jsonc from its example template')
 }
