@@ -11,6 +11,7 @@ describe('admin login page', () => {
     vi.resetModules()
     vi.clearAllMocks()
     vi.stubGlobal('definePageMeta', vi.fn())
+    vi.stubGlobal('useHead', vi.fn())
     vi.stubGlobal('useRoute', () => ({ query: {} }))
     vi.stubGlobal('navigateTo', vi.fn())
   })

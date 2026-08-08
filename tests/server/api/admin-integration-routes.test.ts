@@ -189,6 +189,7 @@ describe('admin integration route handlers', () => {
 
   it('runs an integration action from the parsed params', async () => {
     routerParams({ capability: 'commentProtection', provider: 'turnstile', action: 'test' })
+    vi.mocked(readBody).mockResolvedValue({})
     const runAction = vi.fn().mockResolvedValue({ providerKey: 'turnstile', status: 'active' })
     integrationService({ runAction })
     const event = makeEvent()
@@ -199,7 +200,8 @@ describe('admin integration route handlers', () => {
       'commentProtection',
       'turnstile',
       'test',
-      currentAdmin.permissions
+      currentAdmin.permissions,
+      undefined
     )
     expect(body).toEqual({ data: { providerKey: 'turnstile', status: 'active' }, meta: {} })
   })
