@@ -26,6 +26,7 @@ function seo(overrides: Partial<SeoSettings> = {}): SeoSettings {
     defaultTitle: null,
     defaultDescription: null,
     canonicalBaseUrl: null,
+    authorUrl: null,
     rssEnabled: true,
     sitemapEnabled: true,
     robotsPolicy: 'index,follow',

@@ -48,6 +48,13 @@ const robotsOptions = [
     </label>
 
     <label class="settings-field">
+      <span class="settings-field__label">{{ t('settings.authorUrl') }}</span>
+      <input v-model="value.authorUrl" data-test="seo-author-url" class="settings-field__input" type="url" placeholder="https://example.com/author">
+      <span class="admin-muted">{{ t('settings.authorUrlHint') }}</span>
+      <span v-if="err(['authorUrl'])" class="settings-field__error">{{ err(['authorUrl']) }}</span>
+    </label>
+
+    <label class="settings-field">
       <span class="settings-field__label">{{ t('settings.robots') }}</span>
       <select v-model="value.robotsPolicy" data-test="seo-robots" class="settings-field__input">
         <option v-for="option in robotsOptions" :key="option.value" :value="option.value">

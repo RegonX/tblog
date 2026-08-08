@@ -298,6 +298,7 @@ export interface SeoSettings {
   defaultTitle: string | null
   defaultDescription: string | null
   canonicalBaseUrl: string | null
+  authorUrl: string | null
   rssEnabled: boolean
   sitemapEnabled: boolean
   robotsPolicy: string

@@ -344,6 +344,7 @@ export const seoSettingsInputSchema = z.object({
   defaultTitle: nullableNonEmptyText(200).optional().default(null),
   defaultDescription: nullableNonEmptyText(500).optional().default(null),
   canonicalBaseUrl: canonicalBaseUrlText.optional().default(null),
+  authorUrl: nullableAbsoluteHttpUrlText().optional().default(null),
   rssEnabled: z.boolean().optional().default(true),
   sitemapEnabled: z.boolean().optional().default(true),
   robotsPolicy: z

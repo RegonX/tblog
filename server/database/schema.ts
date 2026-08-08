@@ -468,6 +468,7 @@ export const seoSettings = sqliteTable('seo_settings', {
   defaultTitle: text('default_title'),
   defaultDescription: text('default_description'),
   canonicalBaseUrl: text('canonical_base_url'),
+  authorUrl: text('author_url'),
   rssEnabled: booleanInt('rss_enabled').notNull().default(true),
   sitemapEnabled: booleanInt('sitemap_enabled').notNull().default(true),
   robotsPolicy: text('robots_policy').notNull().default('index,follow'),

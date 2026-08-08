@@ -147,6 +147,15 @@ describe('settings URL input validation', () => {
     }
   )
 
+  it.each(['https://author.example', 'http://localhost:3000/author', '  https://author.example/  '])(
+    'accepts an absolute HTTP(S) author URL: %s',
+    (authorUrl) => {
+      const parsed = seoSettingsInputSchema.parse({ authorUrl })
+
+      expect(parsed.authorUrl).toBe(authorUrl.trim())
+    }
+  )
+
   it.each([
     'blog.example',
     '/blog',
@@ -162,10 +171,28 @@ describe('settings URL input validation', () => {
     }
   )
 
+  it.each([
+    'author.example',
+    '/author',
+    'http:author.example',
+    'https:/author.example',
+    'ftp://author.example',
+    'javascript:alert(1)',
+    'data:text/plain,author'
+  ])(
+    'rejects an invalid author URL: %s',
+    (authorUrl) => {
+      expect(() => seoSettingsInputSchema.parse({ authorUrl })).toThrow()
+    }
+  )
+
   it('preserves nullable and optional URL semantics', () => {
     expect(seoSettingsInputSchema.parse({}).canonicalBaseUrl).toBeNull()
     expect(seoSettingsInputSchema.parse({ canonicalBaseUrl: null }).canonicalBaseUrl).toBeNull()
     expect(seoSettingsInputSchema.parse({ canonicalBaseUrl: '   ' }).canonicalBaseUrl).toBeNull()
+    expect(seoSettingsInputSchema.parse({}).authorUrl).toBeNull()
+    expect(seoSettingsInputSchema.parse({ authorUrl: null }).authorUrl).toBeNull()
+    expect(seoSettingsInputSchema.parse({ authorUrl: '   ' }).authorUrl).toBeNull()
   })
 
   it('rejects canonical base URLs with credentials, queries, or fragments', () => {

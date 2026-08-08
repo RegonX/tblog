@@ -9,6 +9,7 @@ describe('SettingsSeoForm', () => {
       defaultTitle: 'My Blog',
       defaultDescription: 'Build notes',
       canonicalBaseUrl: 'https://example.com',
+      authorUrl: 'https://example.com/author',
       rssEnabled: true,
       sitemapEnabled: true,
       robotsPolicy: 'index,follow'
@@ -19,5 +20,7 @@ describe('SettingsSeoForm', () => {
     expect(wrapper.get('[data-test="seo-preview"]').text()).toContain('My Blog')
     expect(wrapper.get('[data-test="seo-preview"]').text()).toContain('https://example.com/')
     expect(wrapper.get('[data-test="seo-preview"]').text()).toContain('meta name="robots"')
+    expect((wrapper.get('[data-test="seo-author-url"]').element as HTMLInputElement).value)
+      .toBe('https://example.com/author')
   })
 })

@@ -1,0 +1,1 @@
+ALTER TABLE `seo_settings` ADD `author_url` text;

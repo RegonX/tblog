@@ -121,7 +121,7 @@ export function useHomeSeo() {
 /** Per-article metadata: title/description fallbacks, canonical override, OG image, Article JSON-LD. */
 export function useArticleSeo(post: Ref<PostDetailView | null>) {
   const route = useRoute()
-  const { siteName, defaultDescription, logoUrl, canonicalFor, toAbsolute } = useSeoContext()
+  const { siteName, defaultDescription, logoUrl, canonicalFor, toAbsolute, baseUrl, config } = useSeoContext()
 
   const title = computed(() => firstNonEmpty(post.value?.seoTitle, post.value?.title) ?? undefined)
   const description = computed(
@@ -175,7 +175,9 @@ export function useArticleSeo(post: Ref<PostDetailView | null>) {
           canonical: canonical.value,
           image: ogImage.value,
           siteName: siteName.value,
-          logoUrl: publisherLogo.value
+          logoUrl: publisherLogo.value,
+          publisherUrl: `${baseUrl.value}/`,
+          authorUrl: config.value?.seo.authorUrl ?? null
         })
       }
     ]
@@ -189,6 +191,8 @@ function buildArticleJsonLd(input: {
   image: string | null
   siteName: string
   logoUrl: string | null
+  publisherUrl: string
+  authorUrl: string | null
 }): string {
   const { post } = input
   if (!post) {
@@ -214,10 +218,15 @@ function buildArticleJsonLd(input: {
       '@type': 'WebPage',
       '@id': input.canonical
     },
-    author: { '@type': 'Person', name: input.siteName },
+    author: {
+      '@type': 'Person',
+      name: input.siteName,
+      ...(input.authorUrl ? { url: input.authorUrl } : {})
+    },
     publisher: {
       '@type': 'Organization',
       name: input.siteName,
+      url: input.publisherUrl,
       ...(input.logoUrl ? { logo: { '@type': 'ImageObject', url: input.logoUrl } } : {})
     }
   }

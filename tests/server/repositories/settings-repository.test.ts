@@ -101,6 +101,15 @@ describe('settings repository', () => {
     expect(sqlite.prepare('SELECT count(*) AS n FROM home_settings').get()).toEqual({ n: 1 })
   })
 
+  it('round-trips the optional SEO author page URL', async () => {
+    const { repository } = setup()
+    const seo = { ...settingsDefaults.seo, authorUrl: 'https://example.com/author' }
+
+    await repository.saveDomain('seo', seo)
+
+    expect(await repository.getDomain('seo')).toEqual(seo)
+  })
+
   it('upserts the site domain and parses JSON columns back into structured fields', async () => {
     const { repository } = setup()
 

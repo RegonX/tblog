@@ -147,6 +147,7 @@ export function createSettingsRepository(db: AppDatabase): SettingsRepository {
         defaultTitle: row.defaultTitle,
         defaultDescription: row.defaultDescription,
         canonicalBaseUrl: row.canonicalBaseUrl,
+        authorUrl: row.authorUrl,
         rssEnabled: row.rssEnabled,
         sitemapEnabled: row.sitemapEnabled,
         robotsPolicy: row.robotsPolicy
@@ -238,6 +239,7 @@ export function createSettingsRepository(db: AppDatabase): SettingsRepository {
         defaultTitle: value.defaultTitle,
         defaultDescription: value.defaultDescription,
         canonicalBaseUrl: value.canonicalBaseUrl,
+        authorUrl: value.authorUrl,
         rssEnabled: value.rssEnabled,
         sitemapEnabled: value.sitemapEnabled,
         robotsPolicy: value.robotsPolicy

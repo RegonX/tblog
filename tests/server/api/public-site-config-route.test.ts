@@ -60,6 +60,7 @@ describe('public site-config route', () => {
         defaultTitle: null,
         defaultDescription: null,
         canonicalBaseUrl: null,
+        authorUrl: null,
         robotsPolicy: 'index,follow',
         rssEnabled: true,
         sitemapEnabled: true

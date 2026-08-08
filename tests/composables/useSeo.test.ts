@@ -9,7 +9,7 @@ const siteContext = vi.hoisted(() => ({
   locale: { value: 'zh-CN' },
   logoUrl: { value: '/logo.png' as string | null },
   baseUrl: { value: 'https://blog.example' },
-  config: { value: { seo: { rssEnabled: true } } as { seo: { rssEnabled: boolean } } | null },
+  config: { value: { seo: { rssEnabled: true, authorUrl: 'https://blog.example/author' } } as { seo: { rssEnabled: boolean, authorUrl: string | null } } | null },
   canonicalFor: (path: string) => `https://blog.example${path === '/' ? '/' : path}`,
   toAbsolute: (url: string | null) => url
     ? (/^https?:\/\//i.test(url) ? url : `https://blog.example${url.startsWith('/') ? url : `/${url}`}`)
@@ -84,9 +84,16 @@ describe('public SEO head composition', () => {
     expect(script.textContent).toContain('\\u003C/script\\u003E')
     expect(script.textContent).toContain('https://blog.example/logo.png')
     expect(script.textContent).toContain('2026-07-15T12:00:00.000Z')
-    expect(JSON.parse(script.textContent).mainEntityOfPage).toEqual({
+    const jsonLd = JSON.parse(script.textContent)
+    expect(jsonLd.mainEntityOfPage).toEqual({
       '@type': 'WebPage',
       '@id': 'https://canonical.example/demo'
+    })
+    expect(jsonLd.publisher.url).toBe('https://blog.example/')
+    expect(jsonLd.author).toEqual({
+      '@type': 'Person',
+      name: 'TBLOG',
+      url: 'https://blog.example/author'
     })
   })
 
@@ -98,6 +105,23 @@ describe('public SEO head composition', () => {
     expect(script.textContent).not.toContain('</script>')
     expect(JSON.parse(script.textContent).name).toBe('TBLOG </script>')
     siteContext.siteName.value = 'TBLOG'
+  })
+
+  it('omits the author URL when it is not configured', () => {
+    siteContext.config.value = { seo: { rssEnabled: true, authorUrl: null } }
+    const post = computed<PostDetailView>(() => ({
+      id: 'p2', slug: 'no-author-url', type: 'article', title: 'Article', excerpt: null, readingTime: 1,
+      publishedAt: '2026-07-01T00:00:00.000Z', updatedAt: null,
+      category: null, tags: [], html: '<p>Body</p>', tocJson: null, codeMeta: [], cover: null,
+      pageViews: null, analyticsUpdatedAt: null, seoTitle: null, seoDescription: null,
+      canonicalUrlOverride: null, openGraphImageUrl: null, twitterImageUrl: null, jsonLdOverrideJson: null
+    }))
+
+    useArticleSeo(post)
+
+    const script = (headEntries[0]!().script as Array<Record<string, string>>)[0]!
+    expect(JSON.parse(script.textContent).author).toEqual({ '@type': 'Person', name: 'TBLOG' })
+    siteContext.config.value = { seo: { rssEnabled: true, authorUrl: 'https://blog.example/author' } }
   })
 
   it('escapes HTML-sensitive characters without changing parsed JSON values', () => {

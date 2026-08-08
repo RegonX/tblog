@@ -168,6 +168,7 @@ export interface PublicSiteConfigView {
     defaultTitle: string | null
     defaultDescription: string | null
     canonicalBaseUrl: string | null
+    authorUrl: string | null
     robotsPolicy: string
     rssEnabled: boolean
     sitemapEnabled: boolean

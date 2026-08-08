@@ -187,6 +187,7 @@ export const settingsDefaults: SettingsByDomain = {
     defaultTitle: null,
     defaultDescription: null,
     canonicalBaseUrl: null,
+    authorUrl: null,
     rssEnabled: true,
     sitemapEnabled: true,
     robotsPolicy: 'index,follow'
@@ -237,6 +238,7 @@ export interface PublicSiteConfig {
     defaultTitle: string | null
     defaultDescription: string | null
     canonicalBaseUrl: string | null
+    authorUrl: string | null
     robotsPolicy: string
     rssEnabled: boolean
     sitemapEnabled: boolean
@@ -319,6 +321,7 @@ export function toPublicSiteConfig(input: {
       defaultTitle: input.seo.defaultTitle?.trim() || null,
       defaultDescription: input.seo.defaultDescription?.trim() || null,
       canonicalBaseUrl: input.seo.canonicalBaseUrl,
+      authorUrl: input.seo.authorUrl,
       robotsPolicy: input.seo.robotsPolicy,
       rssEnabled: input.seo.rssEnabled,
       sitemapEnabled: input.seo.sitemapEnabled
