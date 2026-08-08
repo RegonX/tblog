@@ -46,6 +46,10 @@ function deferred<T>() {
   return { promise, resolve }
 }
 
+function waitableResource<T extends object>(resource: T, ready: Promise<void> = Promise.resolve()) {
+  return { ...resource, then: ready.then.bind(ready) }
+}
+
 function emptyShell() {
   return shallowRef({
     data: {
@@ -91,18 +95,19 @@ describe('public home page bootstrap boundary', () => {
   })
 
   it('waits for shell and feed before rendering the homepage', async () => {
-    const shellRequest = deferred<{
-      data: ReturnType<typeof shallowRef>
-      status: ReturnType<typeof shallowRef>
-      error: ReturnType<typeof shallowRef>
-    }>()
-    const feedRequest = deferred<{
-      data: ReturnType<typeof shallowRef>
-      status: ReturnType<typeof shallowRef>
-      error: ReturnType<typeof shallowRef>
-    }>()
-    api.useHomeShell.mockReturnValue(shellRequest.promise)
-    api.usePostFeed.mockReturnValue(feedRequest.promise)
+    const shellRequest = deferred<void>()
+    const feedRequest = deferred<void>()
+    api.useHomeShell.mockReturnValue(waitableResource({
+      data: emptyShell(),
+      status: shallowRef('success'),
+      error: shallowRef(null)
+    }, shellRequest.promise))
+    api.usePostFeed.mockReturnValue(waitableResource({
+      data: emptyFeed(),
+      status: shallowRef('success'),
+      error: shallowRef(null),
+      isRevalidating: shallowRef(false)
+    }, feedRequest.promise))
     const page = await import('../../pages/index.vue')
     const render = renderToString(createSSRApp(page.default))
     let completed = false
@@ -113,19 +118,11 @@ describe('public home page bootstrap boundary', () => {
     expect(api.usePostFeed).toHaveBeenCalledOnce()
     expect(completed).toBe(false)
 
-    shellRequest.resolve({
-      data: emptyShell(),
-      status: shallowRef('success'),
-      error: shallowRef(null)
-    })
+    shellRequest.resolve()
     await Promise.resolve()
     expect(completed).toBe(false)
 
-    feedRequest.resolve({
-      data: emptyFeed(),
-      status: shallowRef('success'),
-      error: shallowRef(null)
-    })
+    feedRequest.resolve()
 
     await expect(render).resolves.toContain('data-test="home-view"')
     expect(seo.useHomeSeo).toHaveBeenCalledOnce()
@@ -133,8 +130,12 @@ describe('public home page bootstrap boundary', () => {
 
   it('loads feed for the active page independently of the shell', async () => {
     route.query = { page: '3', sort: 'publishedAt', order: 'desc' }
-    api.useHomeShell.mockResolvedValue({ data: emptyShell(), error: shallowRef(null) })
-    api.usePostFeed.mockResolvedValue({ data: emptyFeed({ page: 3, total: 60, pageCount: 3 }), error: shallowRef(null) })
+    api.useHomeShell.mockReturnValue(waitableResource({ data: emptyShell(), error: shallowRef(null) }))
+    api.usePostFeed.mockReturnValue(waitableResource({
+      data: emptyFeed({ page: 3, total: 60, pageCount: 3 }),
+      error: shallowRef(null),
+      isRevalidating: shallowRef(false)
+    }))
     const page = await import('../../pages/index.vue')
     const container = document.createElement('div')
     const app = createApp({
@@ -153,8 +154,13 @@ describe('public home page bootstrap boundary', () => {
 
   it('does not let stale feed metadata roll a new pagination query back', async () => {
     const feed = emptyFeed({ page: 1, total: 27, pageCount: 2 })
-    api.useHomeShell.mockResolvedValue({ data: emptyShell(), error: shallowRef(null) })
-    api.usePostFeed.mockResolvedValue({ data: feed, error: shallowRef(null) })
+    const isRevalidating = shallowRef(false)
+    api.useHomeShell.mockReturnValue(waitableResource({ data: emptyShell(), error: shallowRef(null) }))
+    api.usePostFeed.mockReturnValue(waitableResource({
+      data: feed,
+      error: shallowRef(null),
+      isRevalidating
+    }))
     const page = await import('../../pages/index.vue')
     const container = document.createElement('div')
     const app = createApp({
@@ -175,6 +181,7 @@ describe('public home page bootstrap boundary', () => {
     await nextTick()
     expect(navigateTo).not.toHaveBeenCalled()
 
+    isRevalidating.value = true
     route.query = { sort: 'publishedAt', order: 'desc', page: '8' }
     await nextTick()
     expect(navigateTo).not.toHaveBeenCalled()
@@ -183,6 +190,10 @@ describe('public home page bootstrap boundary', () => {
       ...feed.value,
       meta: { ...feed.value.meta, page: 2 }
     }
+    await nextTick()
+    expect(navigateTo).not.toHaveBeenCalled()
+
+    isRevalidating.value = false
     await nextTick()
     expect(navigateTo).toHaveBeenCalledWith({
       path: '/',

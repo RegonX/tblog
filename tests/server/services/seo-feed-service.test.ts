@@ -169,7 +169,7 @@ describe('seo feed service - rss', () => {
   })
 
   it('produces a valid feed with zero items when there are no articles', async () => {
-    const service = build({ posts: [{ slug: 'about', title: 'About', excerpt: null, type: 'page', publishedAt: MAR, updatedAt: MAR }] })
+    const service = build({ posts: [{ slug: 'about', title: 'About', excerpt: null, seoTitle: null, seoDescription: null, type: 'page', publishedAt: MAR, updatedAt: MAR }] })
     const xml = (await service.getRssFeed())!.xml
 
     expect(xml).toContain('<channel>')

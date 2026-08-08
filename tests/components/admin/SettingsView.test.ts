@@ -92,7 +92,7 @@ describe('SettingsView', () => {
 
     expect(wrapper.get('[data-test="analytics-report-settings-error"]').text()).toContain('status unavailable')
     expect(wrapper.find('.settings-panel__save').exists()).toBe(false)
-    expect(wrapper.get('[data-test="analytics-report-settings-retry"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="analytics-report-settings-retry"]').exists()).toBe(true)
   })
 
   it('applies the save response without a second status refresh', async () => {

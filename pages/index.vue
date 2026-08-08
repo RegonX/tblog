@@ -30,13 +30,13 @@ const feedQuery = computed(() => {
 
 const siteConfig = useOptionalPublicSiteConfigData()
 // Shell skips feed D1; list is always `/api/v1/posts` so page/sort never doubles the article query.
-const [
-  { data: bootstrap, error: shellError },
-  { data: feedPage, error: feedError, isRevalidating: feedRevalidating }
-] = await Promise.all([
-  useHomeShell(),
-  usePostFeed(feedQuery)
-])
+const homeShell = useHomeShell()
+const postFeed = usePostFeed(feedQuery)
+
+await Promise.all([homeShell, postFeed])
+
+const { data: bootstrap, error: shellError } = homeShell
+const { data: feedPage, error: feedError, isRevalidating: feedRevalidating } = postFeed
 
 if (shellError.value && import.meta.server) {
   const event = useRequestEvent()
@@ -64,8 +64,8 @@ const profile = computed(() => siteConfig.value?.data.profile ?? null)
 const hotspots = computed(() => bootstrap.value?.data.hotspots ?? null)
 const railData = computed(() => bootstrap.value?.data.homeRail ?? null)
 
-watch(() => feedPage.value?.meta, (meta) => {
-  if (!meta) return
+watch([() => feedPage.value?.meta, feedRevalidating], ([meta, isRevalidating]) => {
+  if (!meta || isRevalidating) return
   if (import.meta.client && meta.effectiveSort && meta.effectiveSort !== feedQuery.value.sort) {
     void navigateTo({
       path: '/',
