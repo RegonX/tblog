@@ -50,7 +50,8 @@ function makeEvent(headers: Record<string, string> = {}) {
 }
 
 function mediaService(upload: ReturnType<typeof vi.fn>) {
-  vi.mocked(createMediaServiceForEvent).mockReturnValue({ upload } as MediaService)
+  const implementation: Partial<MediaService> = { upload: upload as unknown as MediaService['upload'] }
+  vi.mocked(createMediaServiceForEvent).mockReturnValue(implementation as MediaService)
 }
 
 function expectErrorEnvelope(body: unknown, expected: { code: string; message: string }) {

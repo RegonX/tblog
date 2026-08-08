@@ -1,0 +1,1 @@
+ALTER TABLE `media_references` ADD `storage_locator` text;

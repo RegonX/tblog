@@ -6,6 +6,7 @@ import {
 import { cloudflareKvCacheRegistration } from '../../../server/integrations/providers/cloudflare-kv-cache'
 import { cloudflareR2StorageRegistration } from '../../../server/integrations/providers/cloudflare-r2-storage'
 import { imageUrlTemplateRegistration } from '../../../server/integrations/providers/image-url-template'
+import { s3CompatibleStorageRegistration } from '../../../server/integrations/providers/s3-compatible-storage'
 import type {
   IntegrationSettingsRepository,
   StoredIntegration,
@@ -56,9 +57,11 @@ describe('media/storage/cache registrations', () => {
   it('registers each new provider under its capability', () => {
     expect(findRegistration('cache', 'cloudflare-kv')).toBe(cloudflareKvCacheRegistration)
     expect(findRegistration('storage', 'cloudflare-r2')).toBe(cloudflareR2StorageRegistration)
+    expect(findRegistration('storage', 's3-compatible')).toBe(s3CompatibleStorageRegistration)
     expect(findRegistration('image', 'url-template')).toBe(imageUrlTemplateRegistration)
     expect(listRegistrationsByCapability('cache')).toHaveLength(1)
-    expect(listRegistrationsByCapability('storage')).toHaveLength(1)
+    // R2 plus the S3-compatible adapter that covers every other object store.
+    expect(listRegistrationsByCapability('storage')).toHaveLength(2)
     expect(listRegistrationsByCapability('image')).toHaveLength(1)
   })
 

@@ -37,6 +37,9 @@ const activeKey = computed(() => {
   if (route.path.startsWith('/admin/comments')) {
     return 'comments'
   }
+  if (route.path.startsWith('/admin/media')) {
+    return 'media'
+  }
   if (route.path.startsWith('/admin/home-cards')) {
     return 'home-cards'
   }

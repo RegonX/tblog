@@ -21,6 +21,7 @@ const navItems = computed(() => [
   { key: 'about', label: t('admin.about'), to: '/admin/about' },
   { key: 'taxonomy', label: t('admin.taxonomy'), to: '/admin/taxonomy' },
   { key: 'comments', label: t('admin.comments'), to: '/admin/comments' },
+  { key: 'media', label: t('admin.mediaLibrary'), to: '/admin/media' },
   { key: 'home-cards', label: t('admin.homeCards'), to: '/admin/home-cards' },
   { key: 'settings', label: t('admin.settings'), to: '/admin/settings' }
 ] as const)

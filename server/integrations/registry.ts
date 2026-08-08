@@ -3,11 +3,13 @@ import type { IntegrationCapability, IntegrationStatus } from '../domain/integra
 import type { CommentModerationProvider } from '../providers/comment-moderation/comment-moderation-provider'
 import type { CommentReplicaProvider } from '../providers/comment-replica/comment-replica-provider'
 import type { AnalyticsReportProvider } from '../providers/analytics-report/analytics-report-provider'
+import type { StorageProvider } from '../providers/storage/storage-provider'
 import { turnstileRegistration } from './providers/turnstile'
 import { algoliaRegistration } from './providers/algolia'
 import { cloudflareKvCacheRegistration } from './providers/cloudflare-kv-cache'
 import { cloudflareR2StorageRegistration } from './providers/cloudflare-r2-storage'
 import { imageUrlTemplateRegistration } from './providers/image-url-template'
+import { s3CompatibleStorageRegistration } from './providers/s3-compatible-storage'
 import { openAiCommentModerationRegistration } from './providers/openai-comment-moderation'
 import { httpCommentModerationRegistration } from './providers/http-comment-moderation'
 import { analyticsRegistrations } from './providers/analytics'
@@ -118,6 +120,15 @@ export interface ProviderRegistration {
     config: Record<string, unknown>,
     env: IntegrationEnvironment
   ) => CommentReplicaProvider | null
+  /**
+   * Optional object-storage adapter builder for the `storage` capability. Returning `null` means the
+   * persisted config or the deployment environment is incomplete, which keeps uploads disabled rather
+   * than half-working.
+   */
+  createStorageProvider?: (
+    config: Record<string, unknown>,
+    env: IntegrationEnvironment
+  ) => StorageProvider | null
 }
 
 export const integrationRegistry: readonly ProviderRegistration[] = [
@@ -125,6 +136,7 @@ export const integrationRegistry: readonly ProviderRegistration[] = [
   algoliaRegistration,
   imageUrlTemplateRegistration,
   cloudflareR2StorageRegistration,
+  s3CompatibleStorageRegistration,
   cloudflareKvCacheRegistration,
   openAiCommentModerationRegistration,
   httpCommentModerationRegistration,

@@ -3,6 +3,8 @@ export interface StoragePutInput {
   body: ArrayBuffer | ReadableStream | string
   contentType?: string
   cacheControl?: string
+  /** Stable application identity written as provider metadata and checked before deletion. */
+  objectId?: string
 }
 
 export interface StoredObjectMetadata {
@@ -10,6 +12,7 @@ export interface StoredObjectMetadata {
   size: number
   contentType: string | null
   uploadedAt: Date | null
+  objectId: string | null
 }
 
 /**

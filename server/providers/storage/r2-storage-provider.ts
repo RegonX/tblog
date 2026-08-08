@@ -5,7 +5,10 @@ export interface R2BucketLike {
   put(
     key: string,
     value: ArrayBuffer | ReadableStream | string,
-    options?: { httpMetadata?: { contentType?: string; cacheControl?: string } }
+    options?: {
+      httpMetadata?: { contentType?: string; cacheControl?: string }
+      customMetadata?: Record<string, string>
+    }
   ): Promise<R2ObjectLike | null>
   head(key: string): Promise<R2ObjectLike | null>
   delete(key: string): Promise<void>
@@ -15,6 +18,7 @@ export interface R2ObjectLike {
   key: string
   size: number
   httpMetadata?: { contentType?: string }
+  customMetadata?: Record<string, string>
   uploaded?: Date
 }
 
@@ -35,7 +39,8 @@ function toMetadata(
     key,
     size: object?.size ?? 0,
     contentType: object?.httpMetadata?.contentType ?? fallbackContentType ?? null,
-    uploadedAt: object?.uploaded ?? null
+    uploadedAt: object?.uploaded ?? null,
+    objectId: object?.customMetadata?.tblogObjectId ?? null
   }
 }
 
@@ -67,10 +72,16 @@ export function createR2StorageProvider(options: R2StorageProviderOptions): Stor
         ...(input.contentType ? { contentType: input.contentType } : {}),
         ...(input.cacheControl ? { cacheControl: input.cacheControl } : {})
       }
+      const customMetadata = input.objectId ? { tblogObjectId: input.objectId } : undefined
       const object = await bucket.put(
         key,
         input.body,
-        input.contentType || input.cacheControl ? { httpMetadata } : undefined
+        input.contentType || input.cacheControl || customMetadata
+          ? {
+              ...(input.contentType || input.cacheControl ? { httpMetadata } : {}),
+              ...(customMetadata ? { customMetadata } : {})
+            }
+          : undefined
       )
       return toMetadata(key, object, input.contentType)
     },

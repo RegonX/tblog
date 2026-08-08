@@ -1,6 +1,8 @@
 import { z } from 'zod'
-import type { R2BucketLike } from '../../providers/storage/r2-storage-provider'
+import { createR2StorageProvider, type R2BucketLike } from '../../providers/storage/r2-storage-provider'
+import type { StorageProvider } from '../../providers/storage/storage-provider'
 import type { ProviderRegistration } from '../registry'
+import { keyPrefixSchema, publicBaseUrlSchema } from './object-storage-config'
 
 export const CLOUDFLARE_R2_STORAGE_PROVIDER_KEY = 'cloudflare-r2'
 export const MEDIA_R2_BINDING = 'MEDIA_R2'
@@ -15,57 +17,10 @@ export function isR2BucketBinding(binding: unknown): binding is R2BucketLike {
   )
 }
 
-function parsePublicBaseUrl(value: string): URL | null {
-  try {
-    return new URL(value)
-  } catch {
-    return null
-  }
-}
-
-function normalizePublicBaseUrl(value: string): string {
-  const url = new URL(value)
-  const pathname = url.pathname.replace(/\/{2,}/g, '/').replace(/\/+$/, '')
-  return `${url.origin}${pathname === '/' ? '' : pathname}`
-}
-
-function isSafeKeyPrefix(value: string): boolean {
-  const withoutTrailingSlash = value.replace(/\/+$/, '')
-  if (!withoutTrailingSlash) return false
-  const segments = withoutTrailingSlash.split('/')
-  return segments.every(
-    (segment) => segment !== '.' && segment !== '..' && /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(segment)
-  )
-}
-
 export const cloudflareR2StorageConfigSchema = z
   .object({
-    publicBaseUrl: z
-      .string()
-      .trim()
-      .max(2048)
-      .superRefine((value, context) => {
-        const url = parsePublicBaseUrl(value)
-        if (!url || url.protocol !== 'https:' || !url.hostname) {
-          context.addIssue({ code: 'custom', message: 'Public base URL must be an https URL' })
-          return
-        }
-        if (url.username || url.password) {
-          context.addIssue({ code: 'custom', message: 'Public base URL must not include credentials' })
-        }
-        if (url.search || url.hash) {
-          context.addIssue({ code: 'custom', message: 'Public base URL must not include a query or fragment' })
-        }
-      })
-      .transform(normalizePublicBaseUrl)
-      .optional(),
-    keyPrefix: z
-      .string()
-      .trim()
-      .max(128)
-      .refine(isSafeKeyPrefix, 'Key prefix must contain only safe path segments')
-      .transform((value) => `${value.replace(/\/+$/, '')}/`)
-      .optional()
+    publicBaseUrl: publicBaseUrlSchema.optional(),
+    keyPrefix: keyPrefixSchema.optional()
   })
   .strip()
 
@@ -75,6 +30,37 @@ export function validateCloudflareR2StorageConfig(config: Record<string, unknown
   const parsed = cloudflareR2StorageConfigSchema.safeParse(config)
   if (parsed.success) return null
   return parsed.error.issues[0]?.message ?? 'Invalid R2 storage configuration'
+}
+
+export interface R2StorageOptions {
+  bucket: R2BucketLike
+  publicBaseUrl: string
+  keyPrefix: string
+}
+
+/**
+ * Resolve complete R2 options from public config + the `MEDIA_R2` binding, or `null` when the binding
+ * or the public base URL is missing. Single source of truth for "is upload storage usable". The bucket
+ * is only ever read from `env` (Cloudflare), never from persisted config.
+ */
+export function resolveR2StorageOptions(
+  config: unknown,
+  env: Record<string, unknown>
+): R2StorageOptions | null {
+  const binding = env[MEDIA_R2_BINDING]
+  if (!isR2BucketBinding(binding)) {
+    return null
+  }
+  const parsed = cloudflareR2StorageConfigSchema.safeParse(config)
+  if (!parsed.success) return null
+  const validated = parsed.data as CloudflareR2StorageConfig
+  if (validateCloudflareR2StorageConfig(validated as Record<string, unknown>)) return null
+  if (!validated.publicBaseUrl) return null
+  return {
+    bucket: binding,
+    publicBaseUrl: validated.publicBaseUrl,
+    keyPrefix: validated.keyPrefix ?? ''
+  }
 }
 
 /**
@@ -109,6 +95,10 @@ export const cloudflareR2StorageRegistration: ProviderRegistration = {
       publicBaseUrl: (config.publicBaseUrl as string | undefined) ?? null,
       keyPrefix: (config.keyPrefix as string | undefined) ?? null
     }
+  },
+  createStorageProvider(config, env): StorageProvider | null {
+    const options = resolveR2StorageOptions(config, env)
+    return options ? createR2StorageProvider(options) : null
   },
   requiredSecrets: [],
   requiredBindings: [MEDIA_R2_BINDING],

@@ -231,11 +231,24 @@ export const mediaReferences = sqliteTable(
     caption: text('caption'),
     providerKey: text('provider_key'),
     referenceState: text('reference_state').notNull().default('external'),
+    /** Logical object key handed to the storage provider (without its configured key prefix). */
+    storageKey: text('storage_key'),
+    /** Versioned, non-secret storage coordinates captured when the object was uploaded. */
+    storageLocator: text('storage_locator'),
+    contentType: text('content_type'),
+    sizeBytes: integer('size_bytes'),
+    originalFilename: text('original_filename'),
+    thumbnailUrl: text('thumbnail_url'),
+    thumbnailKey: text('thumbnail_key'),
+    thumbnailSizeBytes: integer('thumbnail_size_bytes'),
     createdAt: createdAt(),
     updatedAt: updatedAt()
   },
   (table) => [
-    index('media_references_provider_key_idx').on(table.providerKey)
+    index('media_references_provider_key_idx').on(table.providerKey),
+    // Media library pages newest-first; the id tiebreaker keeps paging stable within one timestamp.
+    index('media_references_created_at_idx').on(table.createdAt, table.id),
+    index('media_references_content_type_idx').on(table.contentType)
   ]
 )
 

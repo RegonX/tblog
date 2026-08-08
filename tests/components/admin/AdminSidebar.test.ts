@@ -15,7 +15,7 @@ describe('AdminSidebar', () => {
     const wrapper = mountSidebar({ adminName: 'editor', activeKey: 'dashboard' })
     const text = wrapper.text()
 
-    for (const label of ['仪表盘', '文章', '个人资料', '关于页面', '分类与标签', '评论', '首页卡片', '设置']) {
+    for (const label of ['仪表盘', '文章', '个人资料', '关于页面', '分类与标签', '评论', '图床', '首页卡片', '设置']) {
       expect(text).toContain(label)
     }
     expect(text).toContain('editor')
@@ -46,6 +46,8 @@ describe('AdminSidebar', () => {
     expect(commentsLink?.attributes('href')).toBe('/admin/comments')
     const homeCardsLink = wrapper.findAll('a').find((link) => link.text().includes('首页卡片'))
     expect(homeCardsLink?.attributes('href')).toBe('/admin/home-cards')
+    const mediaLink = wrapper.findAll('a').find((link) => link.text().includes('图床'))
+    expect(mediaLink?.attributes('href')).toBe('/admin/media')
     const settingsLink = wrapper.findAll('a').find((link) => link.text().includes('设置'))
     expect(settingsLink?.attributes('href')).toBe('/admin/settings')
     expect(wrapper.findAll('a').some((link) => link.attributes('href') === '/admin/integrations')).toBe(false)

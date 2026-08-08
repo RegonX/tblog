@@ -420,6 +420,7 @@ export function previewMarkdown(markdown: string) {
 export interface AdminMediaUploadView {
   id: string
   url: string
+  thumbnailUrl: string | null
   contentType: string
   size: number
 }
@@ -432,6 +433,106 @@ export function uploadMedia(file: File, altText?: string) {
     method: 'POST',
     body
   })
+}
+
+export interface AdminMediaItemView {
+  id: string
+  url: string
+  altText: string | null
+  caption: string | null
+  width: number | null
+  height: number | null
+  providerKey: string | null
+  referenceState: string
+  contentType: string | null
+  sizeBytes: number | null
+  originalFilename: string | null
+  thumbnailUrl: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminMediaQuery {
+  q?: string
+  contentType?: string
+  from?: string
+  to?: string
+  offset: number
+  limit: number
+}
+
+export interface AdminMediaMeta {
+  total: number
+  offset: number
+  limit: number
+}
+
+export interface AdminMediaStatsView {
+  totalCount: number
+  totalBytes: number
+  unknownSizeCount: number
+  activeProviderKey: string | null
+}
+
+export interface AdminMediaUsageRef {
+  postId: string
+  title: string
+  slug: string
+  href?: string
+  field: 'content' | 'cover' | 'seoImage' | 'siteSettings' | 'profileSettings' | 'homeSettings'
+}
+
+/** Reactive media library list. Query mutations refetch under one deterministic key. */
+export function useAdminMedia(query: MaybeRefOrGetter<AdminMediaQuery>) {
+  return useFetch<Envelope<AdminMediaItemView[], AdminMediaMeta>>('/api/v1/admin/media', {
+    key: 'admin-media',
+    query: computed(() => toValue(query)),
+    deep: false,
+    dedupe: 'defer'
+  })
+}
+
+export function fetchAdminMediaStats() {
+  return $fetch<Envelope<AdminMediaStatsView>>('/api/v1/admin/media/stats')
+}
+
+export function updateMediaMetadata(id: string, body: { altText: string | null; caption: string | null }) {
+  return $fetch<Envelope<AdminMediaItemView>>(`/api/v1/admin/media/${id}`, {
+    method: 'PATCH',
+    body
+  })
+}
+
+/** `force` skips the reference check; only send it after the administrator confirms the usage list. */
+export function deleteMedia(id: string, force = false) {
+  return $fetch<Envelope<{ id: string; objectDeleted: boolean }>>(`/api/v1/admin/media/${id}`, {
+    method: 'DELETE',
+    query: force ? { force: 'true' } : undefined
+  })
+}
+
+export interface AdminMediaBatchDeleteResult {
+  requested: number
+  deleted: Array<{ id: string; objectDeleted: boolean }>
+  blocked: Array<{ id: string; usage: AdminMediaUsageRef[] }>
+  failed: Array<{ id: string; code: string; message: string }>
+}
+
+export function batchDeleteMedia(ids: string[], force = false) {
+  return $fetch<Envelope<AdminMediaBatchDeleteResult>>('/api/v1/admin/media/batch-delete', {
+    method: 'POST',
+    body: { ids, force }
+  })
+}
+
+/** Referencing posts carried by a `media_in_use` rejection, or `[]` for any other failure. */
+export function mediaUsageFromError(error: unknown): AdminMediaUsageRef[] {
+  const candidate = error as {
+    data?: { error?: { details?: { posts?: unknown } } }
+    response?: { _data?: { error?: { details?: { posts?: unknown } } } }
+  } | null | undefined
+  const posts = candidate?.data?.error?.details?.posts ?? candidate?.response?._data?.error?.details?.posts
+  return Array.isArray(posts) ? (posts as AdminMediaUsageRef[]) : []
 }
 
 export interface AdminCategoryView {

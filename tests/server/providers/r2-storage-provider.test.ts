@@ -8,7 +8,10 @@ import {
 interface PutCall {
   key: string
   value: unknown
-  options?: { httpMetadata?: { contentType?: string; cacheControl?: string } }
+  options?: {
+    httpMetadata?: { contentType?: string; cacheControl?: string }
+    customMetadata?: Record<string, string>
+  }
 }
 
 function createFakeBucket(seed: Record<string, R2ObjectLike> = {}) {
@@ -21,6 +24,7 @@ function createFakeBucket(seed: Record<string, R2ObjectLike> = {}) {
         key,
         size: typeof value === 'string' ? value.length : 0,
         httpMetadata: options?.httpMetadata,
+        customMetadata: options?.customMetadata,
         uploaded: new Date('2026-07-15T00:00:00.000Z')
       }
       objects.set(key, object)
@@ -45,15 +49,21 @@ describe('r2 storage provider', () => {
     const { bucket, calls } = createFakeBucket()
     const provider = createR2StorageProvider({ bucket, ...options })
 
-    const metadata = await provider.put({ key: 'a.png', body: 'binary', contentType: 'image/png' })
+    const metadata = await provider.put({
+      key: 'a.png', body: 'binary', contentType: 'image/png', objectId: 'media-1'
+    })
 
     expect(calls.put[0].key).toBe('uploads/a.png')
-    expect(calls.put[0].options).toEqual({ httpMetadata: { contentType: 'image/png' } })
+    expect(calls.put[0].options).toEqual({
+      httpMetadata: { contentType: 'image/png' },
+      customMetadata: { tblogObjectId: 'media-1' }
+    })
     expect(metadata).toEqual({
       key: 'uploads/a.png',
       size: 6,
       contentType: 'image/png',
-      uploadedAt: new Date('2026-07-15T00:00:00.000Z')
+      uploadedAt: new Date('2026-07-15T00:00:00.000Z'),
+      objectId: 'media-1'
     })
   })
 

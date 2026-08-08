@@ -326,7 +326,11 @@ export function createIntegrationService(dependencies: IntegrationServiceDepende
       if (registration.capability === 'analyticsReport') {
         await dependencies.integrationRepository.upsertAnalyticsReportExclusive(record)
       } else if (
-        (registration.capability === 'analytics' || registration.capability === 'commentModeration')
+        (registration.capability === 'analytics'
+          || registration.capability === 'commentModeration'
+          // Uploads must land in exactly one bucket; enabling a storage backend disables the others
+          // so `resolveStorageProviderForEvent` never has to guess between two enabled rows.
+          || registration.capability === 'storage')
         && enabled
       ) {
         await dependencies.integrationRepository.upsertExclusive(record, registration.capability)

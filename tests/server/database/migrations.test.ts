@@ -38,6 +38,32 @@ describe('database migrations', () => {
     expect(sql).toContain("ALTER TABLE `analytics_report_state` ADD `day_of_week` text DEFAULT 'mon' NOT NULL")
   })
 
+  it('adds nullable media library columns so existing references survive the upgrade', () => {
+    const sql = readGeneratedMigrationSql()
+
+    for (const column of [
+      'storage_key` text',
+      'storage_locator` text',
+      'content_type` text',
+      'size_bytes` integer',
+      'original_filename` text',
+      'thumbnail_url` text',
+      'thumbnail_key` text',
+      'thumbnail_size_bytes` integer'
+    ]) {
+      expect(sql).toContain(`ALTER TABLE \`media_references\` ADD \`${column}`)
+    }
+    // A NOT NULL addition would fail on any deployment that already has uploads.
+    expect(sql).not.toMatch(/ALTER TABLE `media_references` ADD `(storage_key|storage_locator|content_type|size_bytes|original_filename)`[^;]*NOT NULL/)
+  })
+
+  it('indexes the media library list and type filter', () => {
+    const sql = readGeneratedMigrationSql()
+
+    expectSqlToContainIndex(sql, 'media_references_created_at_idx')
+    expectSqlToContainIndex(sql, 'media_references_content_type_idx')
+  })
+
   it('creates the required version one tables', () => {
     const sql = readGeneratedMigrationSql()
 
@@ -135,6 +161,32 @@ describe('database migrations', () => {
     expect(journal.entries.map((entry) => entry.tag)).toEqual(sqlTags)
     expect(journal.entries.map((entry) => entry.idx)).toEqual(sqlTags.map((_, index) => index))
     expect(existsSync(join(metaDir, `${sqlTags.at(-1)?.slice(0, 4)}_snapshot.json`))).toBe(true)
+  })
+
+  it('applies every migration in order against an empty database', () => {
+    // A hand-authored migration whose snapshot is never regenerated makes the next `drizzle-kit
+    // generate` diff against a stale baseline and re-emit statements that already ran, which fails
+    // only on a database that has the earlier migration applied. Replaying the whole chain here
+    // catches that before it reaches a deployment.
+    const migrationsDir = join(process.cwd(), 'server/database/migrations')
+    const files = readdirSync(migrationsDir).filter((file) => file.endsWith('.sql')).sort()
+    const sqlite = new Database(':memory:')
+
+    for (const file of files) {
+      expect(() => sqlite.exec(readFileSync(join(migrationsDir, file), 'utf8')), file).not.toThrow()
+    }
+
+    const columns = sqlite.prepare('PRAGMA table_info(`media_references`)').all() as Array<{ name: string }>
+    expect(columns.map((column) => column.name)).toEqual(expect.arrayContaining([
+      'storage_key',
+      'storage_locator',
+      'content_type',
+      'size_bytes',
+      'original_filename',
+      'thumbnail_url',
+      'thumbnail_key',
+      'thumbnail_size_bytes'
+    ]))
   })
 
   it('copies legacy analytics selection into the registry without deleting legacy data', () => {
