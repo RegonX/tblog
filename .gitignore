@@ -103,3 +103,5 @@ TEMP/
 
 # Generated source
 server/database/migrations-manifest.generated.ts
+wrangler.local.jsonc
+.gitignore
