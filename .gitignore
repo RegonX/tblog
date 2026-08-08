@@ -103,5 +103,7 @@ TEMP/
 
 # Generated source
 server/database/migrations-manifest.generated.ts
+
+# Local development configuration and design previews
 wrangler.local.jsonc
-.gitignore
+.brainstorming/
