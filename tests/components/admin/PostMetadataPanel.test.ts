@@ -40,6 +40,14 @@ describe('PostMetadataPanel', () => {
   it('renders article metadata fields and emits a full updated model', async () => {
     const wrapper = mountPanel()
 
+    expect(
+      wrapper.get('.post-metadata__section--publishing').find('[data-test="metadata-slug"]').exists()
+    ).toBe(true)
+    expect(
+      wrapper.get('.post-metadata__section--classification').find('[data-test="metadata-category"]').exists()
+    ).toBe(true)
+    expect(wrapper.get('[data-test="metadata-tag-select"]').text()).toContain('Nuxt')
+
     await wrapper.get('[data-test="metadata-slug"]').setValue('updated-slug')
     await wrapper.get('[data-test="metadata-cover"]').setValue('https://cdn.example.com/new.jpg')
     await wrapper.get('[data-test="metadata-category"]').setValue('cat-2')
@@ -84,6 +92,7 @@ describe('PostMetadataPanel', () => {
   it('enables homepage featuring only for published articles', async () => {
     const draft = mountPanel()
     expect(draft.get('[data-test="metadata-featured"]').attributes('disabled')).toBeDefined()
+    expect(draft.find('.post-metadata__hint').exists()).toBe(false)
 
     const published = mountPanel({ ...articleModel, status: 'published' })
     await published.get('[data-test="metadata-featured"]').setValue(true)

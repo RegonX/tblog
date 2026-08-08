@@ -25,6 +25,7 @@ export interface PostMetadataModel {
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import PostTagMultiSelect from '~/components/admin/PostTagMultiSelect.vue'
 import { useTblogI18n } from '~/composables/useTblogI18n'
 
 interface Props {
@@ -65,110 +66,101 @@ function updateOptionalText(
   update({ [field]: value === '' ? null : value })
 }
 
-function updateTag(tagId: string, checked: boolean) {
-  const current = new Set(props.modelValue.tagIds)
-  if (checked) {
-    current.add(tagId)
-  } else {
-    current.delete(tagId)
-  }
-  update({ tagIds: Array.from(current) })
-}
 </script>
 
 <template>
   <aside class="post-metadata" :aria-label="t('editor.metadata')">
-    <label class="post-metadata__field">
-      <span class="post-metadata__label">{{ t('editor.slug') }}</span>
-      <input
-        data-test="metadata-slug"
-        class="post-metadata__control"
-        :value="modelValue.slug"
-        @input="update({ slug: ($event.target as HTMLInputElement).value })"
-      >
-    </label>
-
-    <label class="post-metadata__field">
-      <span class="post-metadata__label">{{ t('editor.status') }}</span>
-      <select
-        data-test="metadata-status"
-        class="post-metadata__control"
-        :value="modelValue.status"
-        @change="update({ status: ($event.target as HTMLSelectElement).value as PostMetadataModel['status'] })"
-      >
-        <option value="draft">{{ t('editor.draft') }}</option>
-        <option value="published">{{ t('editor.published') }}</option>
-      </select>
-    </label>
-
-    <template v-if="showArticleFields">
-      <div class="post-metadata__feature-field">
-        <label class="post-metadata__check post-metadata__check--featured">
-          <input
-            type="checkbox"
-            data-test="metadata-featured"
-            :checked="modelValue.featured"
-            :disabled="modelValue.status !== 'published'"
-            @change="update({ featured: ($event.target as HTMLInputElement).checked })"
-          >
-          <span>{{ t('editor.featured') }}</span>
-        </label>
-        <p v-if="modelValue.status !== 'published'" class="post-metadata__hint">
-          {{ t('editor.featuredPublishedOnly') }}
-        </p>
-      </div>
-
-      <div class="post-metadata__cover-field">
-        <label class="post-metadata__field">
-          <span class="post-metadata__label">{{ t('editor.coverUrl') }}</span>
-          <input
-            data-test="metadata-cover"
-            class="post-metadata__control"
-            :value="modelValue.cover ?? ''"
-            placeholder="https://example.com/cover.jpg"
-            @input="updateCover(($event.target as HTMLInputElement).value)"
-          >
-        </label>
-
-        <button
-          v-if="props.uploadEnabled"
-          type="button"
-          class="post-metadata__upload"
-          data-test="metadata-upload-cover"
-          :disabled="props.uploading"
-          @click="emit('uploadCover')"
+    <section class="post-metadata__section post-metadata__section--publishing">
+      <label class="post-metadata__field">
+        <span class="post-metadata__label">{{ t('editor.slug') }}</span>
+        <input
+          data-test="metadata-slug"
+          class="post-metadata__control"
+          :value="modelValue.slug"
+          @input="update({ slug: ($event.target as HTMLInputElement).value })"
         >
-          {{ props.uploading ? t('editor.uploadingImage') : t('editor.uploadCover') }}
-        </button>
-      </div>
+      </label>
 
       <label class="post-metadata__field">
-        <span class="post-metadata__label">{{ t('editor.category') }}</span>
+        <span class="post-metadata__label">{{ t('editor.status') }}</span>
         <select
-          data-test="metadata-category"
+          data-test="metadata-status"
           class="post-metadata__control"
-          :value="modelValue.categoryId ?? ''"
-          @change="updateCategory(($event.target as HTMLSelectElement).value)"
+          :value="modelValue.status"
+          @change="update({ status: ($event.target as HTMLSelectElement).value as PostMetadataModel['status'] })"
         >
-          <option value="">{{ t('editor.none') }}</option>
-          <option v-for="category in categories" :key="category.id" :value="category.id">
-            {{ category.name }}
-          </option>
+          <option value="draft">{{ t('editor.draft') }}</option>
+          <option value="published">{{ t('editor.published') }}</option>
         </select>
       </label>
 
-      <fieldset class="post-metadata__field post-metadata__fieldset">
-        <legend class="post-metadata__label">{{ t('editor.tags') }}</legend>
-        <label v-for="tag in tags" :key="tag.id" class="post-metadata__check">
-          <input
-            type="checkbox"
-            :data-test="`metadata-tag-${tag.id}`"
-            :checked="modelValue.tagIds.includes(tag.id)"
-            @change="updateTag(tag.id, ($event.target as HTMLInputElement).checked)"
+      <template v-if="showArticleFields">
+        <div class="post-metadata__cover-field">
+          <label class="post-metadata__field">
+            <span class="post-metadata__label">{{ t('editor.coverUrl') }}</span>
+            <input
+              data-test="metadata-cover"
+              class="post-metadata__control"
+              :value="modelValue.cover ?? ''"
+              placeholder="https://example.com/cover.jpg"
+              @input="updateCover(($event.target as HTMLInputElement).value)"
+            >
+          </label>
+
+          <button
+            v-if="props.uploadEnabled"
+            type="button"
+            class="post-metadata__upload"
+            data-test="metadata-upload-cover"
+            :disabled="props.uploading"
+            @click="emit('uploadCover')"
           >
-          <span>{{ tag.name }}</span>
+            {{ props.uploading ? t('editor.uploadingImage') : t('editor.uploadCover') }}
+          </button>
+        </div>
+
+        <div class="post-metadata__feature-field">
+          <label class="post-metadata__check post-metadata__check--featured">
+            <input
+              type="checkbox"
+              data-test="metadata-featured"
+              :checked="modelValue.featured"
+              :disabled="modelValue.status !== 'published'"
+              @change="update({ featured: ($event.target as HTMLInputElement).checked })"
+            >
+            <span>{{ t('editor.featured') }}</span>
+          </label>
+        </div>
+      </template>
+    </section>
+
+    <template v-if="showArticleFields">
+      <section class="post-metadata__section post-metadata__section--classification">
+        <label class="post-metadata__field">
+          <span class="post-metadata__label">{{ t('editor.category') }}</span>
+          <select
+            data-test="metadata-category"
+            class="post-metadata__control"
+            :value="modelValue.categoryId ?? ''"
+            @change="updateCategory(($event.target as HTMLSelectElement).value)"
+          >
+            <option value="">{{ t('editor.none') }}</option>
+            <option v-for="category in categories" :key="category.id" :value="category.id">
+              {{ category.name }}
+            </option>
+          </select>
         </label>
-      </fieldset>
+
+        <div class="post-metadata__field">
+          <span class="post-metadata__label">{{ t('editor.tags') }}</span>
+          <PostTagMultiSelect
+            :model-value="modelValue.tagIds"
+            :tags="tags"
+            :empty-label="t('editor.none')"
+            @update:model-value="update({ tagIds: $event })"
+          />
+        </div>
+      </section>
 
       <details class="post-metadata__seo" data-test="metadata-seo-panel">
         <summary>{{ t('editor.seoMetadata') }}</summary>
