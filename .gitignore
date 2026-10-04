@@ -59,7 +59,7 @@ coverage/
 test-results/
 playwright-report/
 .nyc_output/
-reports/
+/reports/
 
 # Logs and diagnostic dumps
 *.log
@@ -80,10 +80,14 @@ TEMP/
 
 # Local database state
 *.db
+*.db-*
 *.sqlite
+*.sqlite-*
 *.sqlite3
+*.sqlite3-*
 
 # Agent and IDE runtime state
+.agents/
 .claude/
 .codex/
 .cursor/
@@ -95,6 +99,7 @@ TEMP/
 # Local Agents workflow and documentation. Keep these files available to local agents, but never
 # include them in the published source repository.
 /AGENTS.md
+/CLAUDE.md
 /ai/
 /features/
 /docs/
