@@ -107,3 +107,8 @@ server/database/migrations-manifest.generated.ts
 # Local development configuration and design previews
 wrangler.local.jsonc
 .brainstorming/
+# >>> Comet managed project state >>>
+!/.comet/
+/.comet/*
+!/.comet/config.yaml
+# <<< Comet managed project state <<<
